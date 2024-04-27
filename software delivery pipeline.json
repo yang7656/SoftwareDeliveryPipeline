@@ -63,28 +63,208 @@
                     }]
                 },
                 "Path": "/",
-                "Policies": [{
+                "Policies": [
+                  {
                     "PolicyName": "CodeBuildAccess",
                     "PolicyDocument": {
                         "Version": "2012-10-17",
                         "Statement": [{
                             "Effect": "Allow",
+                            "Resource": [
+                                {
+                                    "Fn::GetAtt": [
+                                        "ArtifactBucket",
+                                        "Arn"
+                                    ]
+                                },
+                                {"Fn::Join": [
+                                    "",
+                                    [
+                                        {
+                                            "Fn::GetAtt": [
+                                                "ArtifactBucket",
+                                                "Arn"
+                                            ]
+                                        },
+                                        "/*"
+                                    ]
+                                ]},
+                                "arn:aws:s3:::seis665-public/*",
+                                "arn:aws:s3:::seis665-public"
+                            ],
+                    
                             "Action": [
                                 "s3:PutObject",
                                 "s3:GetObject",
                                 "s3:GetBucketAcl",
                                 "s3:GetBucketLocation"
+                            ]
+                        }]
+                    }
+                  },
+                  {
+                    "PolicyName": "CloudWatchLogsPolicy",
+                    "PolicyDocument": {
+                        "Version": "2012-10-17",
+                        "Statement": [{
+                            "Effect": "Allow",
+                            "Action": [
+                                "logs:CreateLogStream",
+                                "logs:CreateLogGroup", 
+                                "logs:PutLogEvents"
                             ],
-                            "Resource": "arn:aws:s3:::seis665-public/java-project.zip"
-                        },
-                        {
+                            "Resource": [
+                                "arn:aws:logs:us-east-1:975050137437:log-group:/aws/codebuild/AppBuildProject-3FJtKbve7d6m:*"
+                            ]
+                        }]
+                    }
+                  },
+                  {
+                    "PolicyName": "GitPull",
+                    "PolicyDocument": {
+                        "Version": "2012-10-17",
+                        "Statement": [{
                             "Sid": "CodeCommitPolicy",
                             "Effect": "Allow",
                             "Action": [ "codecommit:GitPull" ],
                             "Resource": [ "*" ]
                         }]
                     }
-                }]
+                  }
+                ]
+            }
+        },
+        "BuildLogPolicy": {
+            "Type": "AWS::IAM::Policy",
+            "Properties": {
+               "PolicyName": "BuildLogAccess",
+               "PolicyDocument": {
+                    "Version" : "2012-10-17",
+                    "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Resource": [
+                            {"Fn::Sub": [
+                                "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${project}",
+                                {"project": {
+                                    "Ref": "AppBuildProject"
+                                    }
+                                }
+                                ]
+                            },
+                            {"Fn::Sub": [
+                                "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/aws/codebuild/${project}:*",
+                                {"project": {
+                                    "Ref": "AppBuildProject"
+                                    }
+                                }
+                                ]
+                            }
+                        ],
+                        "Action": [
+                            "logs:CreateLogGroup",
+                            "logs:CreateLogStream",
+                            "logs:PutLogEvents"
+                        ]
+                    }
+                    ]
+               },
+               "Roles": [ { "Ref": "AppBuildRole" }]
+            }
+        },
+        
+        
+        
+        
+        
+        
+        
+        
+        "AppPipeline": {
+            "Type": "AWS::CodePipeline::Pipeline"
+        },
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        "CodePipelineServiceRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Statement": [{
+                        "Action": [ "sts:AssumeRole" ],
+                        "Effect": "Allow",
+                        "Principal": {
+                            "Service": [ "codepipeline.amazonaws.com" ]
+                        }
+                    }]
+                },
+                "Path": "/service-role/",
+                "Policies": [
+                    {
+                        "PolicyDocument": {
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Resource": [
+                                    {"Fn::GetAtt": [ ArtifactBucket", "Arn ]},
+                                    {"Fn::Join": ["",
+                                        [{
+                                            "Fn::GetAtt": [
+                                                "ArtifactBucket",
+                                                "Arn"
+                                            ]
+                                        },
+                                        "/*"
+                                        ]
+                                    ]}
+                                ],
+                                "Action": [
+                                    "s3:PutObject",
+                                    "s3:GetObject",
+                                    "s3:GetBucketAcl",
+                                    "s3:GetBucketLocation"
+                                ]
+                            },
+                            {
+                                "Action": [
+                                    "codecommit:CancelUploadArchive",
+                                    "codecommit:GetBranch",
+                                    "codecommit:GetCommit",
+                                    "codecommit:GetUploadArchiveStatus",
+                                    "codecommit:UploadArchive"
+                                ],
+                                "Resource": [
+                                    { "Fn::GetAtt": [ "JavaRepository", "Arn" ] }
+                                ],
+                                "Effect": "Allow"
+                            },
+                            {
+                                "Action": [
+                                    "codebuild:BatchGetBuilds",
+                                    "codebuild:StartBuild"
+                                ],
+                                "Resource": [{ "Fn::GetAtt": [ "AppBuildProject", "Arn" ]}],
+                                "Effect": "Allow"
+                            }
+                        ],
+                        "Version": "2012-10-17"
+                        },
+                        "PolicyName": "ec2codedeploy"
+                    }
+                ]
             }
         }
     },
