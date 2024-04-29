@@ -174,12 +174,7 @@
         },
         
         
-        
-        
-        
-        
-        
-        
+               
         "AppPipeline": {
             "Type": "AWS::CodePipeline::Pipeline",
             "Properties": {
@@ -206,7 +201,7 @@
                                     }
                                 ],
                                 "Configuration": {
-                                    "RepositoryName": { "Ref": "AppCodeCommitRepository" },
+                                    "RepositoryName": "java-project",
                                     "BranchName": "main"
                                 },
                                 "RunOrder": 1
@@ -244,22 +239,6 @@
                 ]
             }
         },
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         "CodePipelineServiceRole": {
             "Type": "AWS::IAM::Role",
             "Properties": {
@@ -305,11 +284,11 @@
                                         "codecommit:GetBranch",
                                         "codecommit:GetCommit",
                                         "codecommit:GetUploadArchiveStatus",
-                                        "codecommit:UploadArchive"
+                                        "codecommit:UploadArchive",
+                                        "codecommit:GitPull",
+                                        "codecommit:GetRepository"
                                     ],
-                                    "Resource": [
-                                        { "Fn::GetAtt": [ "AppCodeCommitRepository", "Arn" ] }
-                                    ],
+                                    "Resource": "*",
                                     "Effect": "Allow"
                                 },
                                 {
@@ -323,17 +302,16 @@
                                 {
                                     "Effect": "Allow",
                                     "Action": [
-                                        "codecommit:GitPull",
-                                        "codecommit:GetBranch",
-                                        "codecommit:GetCommit",
-                                        "codecommit:GetRepository"
+                                        "codebuild:BatchGetBuilds",
+                                        "codebuild:StartBuild"
                                     ],
-                                    "Resource": "*"
+                                    "Resource": "arn:aws:codebuild:us-east-1:975050137437:project/java-project"
                                 }
+                                
                             ],
                             "Version": "2012-10-17"
                         },
-                        "PolicyName": "ec2codedeploy"
+                        "PolicyName": "s3codedeploy"
                     }
                 ]
             }
