@@ -230,7 +230,7 @@
                                     }
                                 ],
                                 "Configuration": {
-                                    "ProjectName": "java-project"
+                                    "ProjectName": { "Ref": "AppBuildProject" }
                                 },
                                 "RunOrder": 1
                             }
