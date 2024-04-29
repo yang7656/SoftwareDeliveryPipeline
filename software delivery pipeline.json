@@ -298,14 +298,6 @@
                                     ],
                                     "Resource": [{ "Fn::GetAtt": [ "AppBuildProject", "Arn" ]}],
                                     "Effect": "Allow"
-                                },
-                                {
-                                    "Effect": "Allow",
-                                    "Action": [
-                                        "codebuild:BatchGetBuilds",
-                                        "codebuild:StartBuild"
-                                    ],
-                                    "Resource": "arn:aws:codebuild:us-east-1:975050137437:project/java-project"
                                 }
                                 
                             ],
