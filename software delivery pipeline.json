@@ -181,7 +181,68 @@
         
         
         "AppPipeline": {
-            "Type": "AWS::CodePipeline::Pipeline"
+            "Type": "AWS::CodePipeline::Pipeline",
+            "Properties": {
+                "RoleArn": { "Fn::GetAtt": ["CodePipelineServiceRole", "Arn"] },
+                "ArtifactStore": {
+                    "Type": "S3",
+                    "Location": { "Ref": "ArtifactBucket" }
+                },
+                "Stages": [
+                    {
+                        "Name": "Source",
+                        "Actions": [
+                            {
+                                "Name": "SourceAction",
+                                "ActionTypeId": {
+                                    "Category": "Source",
+                                    "Owner": "AWS",
+                                    "Provider": "CodeCommit",
+                                    "Version": "1"
+                                },
+                                "OutputArtifacts": [
+                                    {
+                                        "Name": "SourceOutput"
+                                    }
+                                ],
+                                "Configuration": {
+                                    "RepositoryName": { "Ref": "AppCodeCommitRepository" },
+                                    "BranchName": "main"
+                                },
+                                "RunOrder": 1
+                            }
+                        ]
+                    },
+                    {
+                        "Name": "Build",
+                        "Actions": [
+                            {
+                                "Name": "BuildAction",
+                                "ActionTypeId": {
+                                    "Category": "Build",
+                                    "Owner": "AWS",
+                                    "Provider": "CodeBuild",
+                                    "Version": "1"
+                                },
+                                "InputArtifacts": [
+                                    {
+                                        "Name": "SourceOutput"
+                                    }
+                                ],
+                                "OutputArtifacts": [
+                                    {
+                                        "Name": "BuildOutput"
+                                    }
+                                ],
+                                "Configuration": {
+                                    "ProjectName": "java-project"
+                                },
+                                "RunOrder": 1
+                            }
+                        ]
+                    }
+                ]
+            }
         },
         
         
@@ -215,52 +276,62 @@
                 "Policies": [
                     {
                         "PolicyDocument": {
-                        "Statement": [
-                            {
-                                "Effect": "Allow",
-                                "Resource": [
-                                    {"Fn::GetAtt": [ ArtifactBucket", "Arn ]},
-                                    {"Fn::Join": ["",
-                                        [{
-                                            "Fn::GetAtt": [
-                                                "ArtifactBucket",
-                                                "Arn"
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Resource": [
+                                        {"Fn::GetAtt": [ "ArtifactBucket", "Arn" ]},
+                                        {"Fn::Join": ["",
+                                            [{
+                                                "Fn::GetAtt": [
+                                                    "ArtifactBucket",
+                                                    "Arn"
+                                                ]
+                                            },
+                                            "/*"
                                             ]
-                                        },
-                                        "/*"
-                                        ]
-                                    ]}
-                                ],
-                                "Action": [
-                                    "s3:PutObject",
-                                    "s3:GetObject",
-                                    "s3:GetBucketAcl",
-                                    "s3:GetBucketLocation"
-                                ]
-                            },
-                            {
-                                "Action": [
-                                    "codecommit:CancelUploadArchive",
-                                    "codecommit:GetBranch",
-                                    "codecommit:GetCommit",
-                                    "codecommit:GetUploadArchiveStatus",
-                                    "codecommit:UploadArchive"
-                                ],
-                                "Resource": [
-                                    { "Fn::GetAtt": [ "JavaRepository", "Arn" ] }
-                                ],
-                                "Effect": "Allow"
-                            },
-                            {
-                                "Action": [
-                                    "codebuild:BatchGetBuilds",
-                                    "codebuild:StartBuild"
-                                ],
-                                "Resource": [{ "Fn::GetAtt": [ "AppBuildProject", "Arn" ]}],
-                                "Effect": "Allow"
-                            }
-                        ],
-                        "Version": "2012-10-17"
+                                        ]}
+                                    ],
+                                    "Action": [
+                                        "s3:PutObject",
+                                        "s3:GetObject",
+                                        "s3:GetBucketAcl",
+                                        "s3:GetBucketLocation"
+                                    ]
+                                },
+                                {
+                                    "Action": [
+                                        "codecommit:CancelUploadArchive",
+                                        "codecommit:GetBranch",
+                                        "codecommit:GetCommit",
+                                        "codecommit:GetUploadArchiveStatus",
+                                        "codecommit:UploadArchive"
+                                    ],
+                                    "Resource": [
+                                        { "Fn::GetAtt": [ "AppCodeCommitRepository", "Arn" ] }
+                                    ],
+                                    "Effect": "Allow"
+                                },
+                                {
+                                    "Action": [
+                                        "codebuild:BatchGetBuilds",
+                                        "codebuild:StartBuild"
+                                    ],
+                                    "Resource": [{ "Fn::GetAtt": [ "AppBuildProject", "Arn" ]}],
+                                    "Effect": "Allow"
+                                },
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "codecommit:GitPull",
+                                        "codecommit:GetBranch",
+                                        "codecommit:GetCommit",
+                                        "codecommit:GetRepository"
+                                    ],
+                                    "Resource": "*"
+                                }
+                            ],
+                            "Version": "2012-10-17"
                         },
                         "PolicyName": "ec2codedeploy"
                     }
