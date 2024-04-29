@@ -219,7 +219,7 @@
                             {
                                 "Effect": "Allow",
                                 "Resource": [
-                                    {"Fn::GetAtt": [ ArtifactBucket", "Arn ]},
+                                    {"Fn::GetAtt": [ "ArtifactBucket", "Arn" ]},
                                     {"Fn::Join": ["",
                                         [{
                                             "Fn::GetAtt": [
